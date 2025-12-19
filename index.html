@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Swati's 40th Birthday</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital@1&family=Inter:wght@200;400&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <style>
+        :root { --bg: #050505; --gold: #c5a059; --white: #ffffff; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            background-color: var(--bg); color: var(--white);
+            font-family: 'Inter', sans-serif; overflow: hidden;
+        }
+
+        #webgl-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+        }
+
+        #overlay {
+            position: fixed; inset: 0; z-index: 100;
+            background: var(--bg); display: flex; align-items: center;
+            justify-content: center; cursor: pointer; text-align: center;
+        }
+
+        .start-btn {
+            letter-spacing: 0.5em; font-size: 0.7rem; color: var(--gold);
+            text-transform: uppercase; animation: pulse 2s infinite;
+        }
+
+        #ui-content {
+            position: relative; z-index: 10; height: 100vh;
+            display: flex; flex-direction: column; justify-content: center;
+            align-items: center; pointer-events: none; opacity: 0;
+            padding: 20px;
+        }
+
+        .invite-card { pointer-events: auto; text-align: center; max-width: 450px; }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(3.5rem, 15vw, 6rem);
+            font-weight: 400; font-style: italic; margin: 0;
+            line-height: 1.1;
+        }
+
+        .label {
+            font-size: 0.7rem; letter-spacing: 0.4em; color: var(--gold);
+            text-transform: uppercase; margin-bottom: 10px; font-weight: 600;
+        }
+
+        .line {
+            width: 1px; height: 80px; 
+            background: linear-gradient(to bottom, transparent, var(--gold), transparent);
+            margin: 20px auto;
+        }
+
+        .details p { margin: 8px 0; font-weight: 200; letter-spacing: 0.1em; font-size: 1rem; }
+
+        .rsvp {
+            display: inline-block; margin-top: 30px; padding: 12px 40px;
+            border: 1px solid rgba(255,255,255,0.2); border-radius: 50px;
+            color: white; text-decoration: none; font-size: 0.8rem;
+            transition: 0.3s;
+        }
+        .rsvp:hover { background: white; color: black; }
+
+        @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
+    </style>
+</head>
+<body>
+
+    <div id="overlay" onclick="initExperience()">
+        <div class="start-btn">View Invitation</div>
+    </div>
+
+    <canvas id="webgl-canvas"></canvas>
+
+    <div id="ui-content">
+        <div class="invite-card">
+            <div class="label">A Milestone Celebration</div>
+            <h1>Swati</h1>
+            <div class="line"></div>
+            <div class="details">
+                <p>FORTY YEARS OF RADIANCE</p>
+                <p style="opacity: 0.6;">Saturday, October 12th • 7:00 PM</p>
+                <p style="opacity: 0.6;">The Penthouse, Mumbai</p>
+            </div>
+            <a href="#" class="rsvp">RSVP</a>
+        </div>
+    </div>
+
+    <script>
+        let scene, camera, renderer, cloud;
+
+        function setupWebGL() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ 
+                canvas: document.getElementById('webgl-canvas'), 
+                antialias: true, 
+                alpha: true 
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            const geo = new THREE.BufferGeometry();
+            const pos = [];
+            // Create a mathematical distribution (Manim style)
+            for(let i=0; i<2000; i++) {
+                const r = 8;
+                const theta = 2 * Math.PI * Math.random();
+                const phi = Math.acos(2 * Math.random() - 1);
+                pos.push(
+                    r * Math.sin(phi) * Math.cos(theta),
+                    r * Math.sin(phi) * Math.sin(theta),
+                    r * Math.cos(phi)
+                );
+            }
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+            const mat = new THREE.PointsMaterial({ size: 0.02, color: 0xffffff, transparent: true, opacity: 0.4 });
+            cloud = new THREE.Points(geo, mat);
+            scene.add(cloud);
+            camera.position.z = 12;
+
+            function animate() {
+                requestAnimationFrame(animate);
+                cloud.rotation.y += 0.0008;
+                cloud.rotation.z += 0.0003;
+                renderer.render(scene, camera);
+            }
+            animate();
+        }
+
+        function initExperience() {
+            document.getElementById('overlay').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('overlay').style.display = 'none';
+            }, 800);
+            
+            // GSAP Sequence
+            const tl = gsap.timeline();
+            tl.to("#ui-content", { opacity: 1, duration: 1.5 })
+              .from("h1", { y: 60, opacity: 0, duration: 2, ease: "power4.out" }, "-=1")
+              .from(".line", { scaleY: 0, duration: 1.5, ease: "expo.inOut" }, "-=1.5")
+              .from(".details p", { opacity: 0, y: 15, stagger: 0.2, duration: 1 }, "-=1");
+        }
+
+        window.addEventListener('resize', () => {
+            if (camera) {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        });
+
+        window.onload = setupWebGL;
+    </script>
+</body>
+</html>
